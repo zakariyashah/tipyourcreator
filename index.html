@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tip yourr favourite creators...></creator></title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body style="font-family:arial; background: linear-gradient(135deg, #6a11cb, #2575fc); color:white; padding:20px;">
+
+<h1 style="text-align:center;">💸 Tip yourr favrioute creators...</h1>
+<p id="totalTip" style="text-align:center;">Total Tipped: 0 SHM</p>
+
+<button onclick="connect()">Connect Wallet</button>
+<p id="wallet"></p>
+<p id="bal"></p>
+
+<input id="creator" placeholder="Creator Wallet" style="width:100%;padding:10px;margin:5px 0;">
+<input id="message" placeholder="Message" style="width:100%;padding:10px;margin:5px 0;">
+<input id="amount" placeholder="Amount SHM" style="width:100%;padding:10px;margin:5px 0;">
+<button onclick="tip()">Send Tip</button>
+
+<h2>History</h2>
+<div style="max-height:200px;overflow:auto;">
+<table id="history" border="1" style="width:100%; color:black; background:white;">
+<tr><th>Wallet</th><th>Creator</th><th>Msg</th><th>Amt</th><th>Tx</th><th>Time</th></tr>
+</table>
+</div>
+
+<script>
+let p, s, balSim=0, total=0, txs=[]
+
+async function connect(){
+ if(!window.ethereum){alert("Install MetaMask!"); return;}
+ p=new ethers.providers.Web3Provider(window.ethereum)
+ await p.send("eth_requestAccounts",[])
+ s=p.getSigner()
+ let w=await s.getAddress()
+ document.getElementById("wallet").innerText="You: "+w
+ let b=await p.getBalance(w)
+ balSim=Number(ethers.utils.formatEther(b))
+ document.getElementById("bal").innerText="Balance: "+balSim.toFixed(4)+" SHM"
+}
+
+function fakeTx(){return "0x"+Math.floor(Math.random()*1e16).toString(16).padStart(64,'0')}
+
+async function tip(){
+ if(!s) await connect()
+ let c=document.getElementById("creator").value
+ let m=document.getElementById("message").value
+ let a=document.getElementById("amount").value
+ if(!c){alert("Enter creator wallet"); return;}
+ if(!a || isNaN(a) || Number(a)<=0){alert("Enter valid amount"); return;}
+ if(Number(a)>balSim){alert("Not enough balance"); return;}
+ let w=await s.getAddress()
+ let tx=fakeTx()
+ let t=new Date().toLocaleString()
+ balSim-=Number(a)
+ total+=Number(a)
+ document.getElementById("bal").innerText="Balance: "+balSim.toFixed(4)+" SHM"
+ document.getElementById("totalTip").innerText="Total Tipped: "+total+" SHM"
+ txs.unshift({w,c,m,a,tx,t})
+ updateTable()
+ alert("Tip sent! "+a+" SHM to "+c+" Tx:"+tx)
+}
+
+function updateTable(){
+ let tbl=document.getElementById("history")
+ tbl.innerHTML='<tr><th>Wallet</th><th>Creator</th><th>Msg</th><th>Amt</th><th>Tx</th><th>Time</th></tr>'
+ txs.forEach((x,i)=>{
+  let r=tbl.insertRow()
+  r.insertCell(0).innerText=x.w
+  r.insertCell(1).innerText=x.c
+  r.insertCell(2).innerText=x.m
+  r.insertCell(3).innerText=x.a
+  r.insertCell(4).innerText=x.tx
+  r.insertCell(5).innerText=x.t
+ })
+}
+</script>
+
+</body>
+</html>
